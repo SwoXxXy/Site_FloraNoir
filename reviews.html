@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora Noir — Отзывы</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="logo.svg" alt="Flora Noir" class="logo">
+        </div>
+        <div class="burger-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="shop.html">Магазин</a></li>
+            <li><a href="index.html#cart">Корзина <span id="cartCounter">0</span></a></li>
+            <li><a href="index.html#contacts">Контакты</a></li>
+            <li><a href="reviews.html" class="active">Отзывы</a></li>
+            <li><a href="admin.html" class="admin-link">Админ</a></li>
+        </ul>
+    </nav>
+
+    <main class="reviews-page">
+        <h1>Отзывы наших клиентов</h1>
+        
+        <div class="reviews-list" id="reviewsList">
+            <!-- Отзывы будут загружены через JS -->
+        </div>
+        
+        <div class="review-form">
+            <h2>Оставить отзыв</h2>
+            <form id="newReviewForm">
+                <div class="form-group">
+                    <label for="reviewName">Ваше имя:</label>
+                    <input type="text" id="reviewName" placeholder="Введите ваше имя" required>
+                </div>
+                <div class="form-group">
+                    <label for="reviewProduct">Товар:</label>
+                    <select id="reviewProduct" required>
+                        <option value="">Выберите товар</option>
+                        <!-- Товары будут загружены через JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Оценка:</label>
+                    <div class="rating-stars">
+                        <input type="radio" id="star5" name="rating" value="5">
+                        <label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reviewText">Текст отзыва:</label>
+                    <textarea id="reviewText" rows="5" placeholder="Поделитесь вашими впечатлениями о товаре" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Отправить отзыв</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <img src="logo.svg" alt="Flora Noir" class="footer-logo">
+            <p>© 2023 Flora Noir. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Корзина
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCounter = document.getElementById('cartCounter');
+            
+            function updateCartCounter() {
+                cartCounter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            }
+            
+            updateCartCounter();
+            
+            // Отзывы
+            let reviews = [];
+            
+            // Загрузка отзывов из базы
+            async function fetchReviews() {
+                try {
+                    const res = await fetch('http://localhost:3000/api/reviews');
+                    if (!res.ok) {
+                        throw new Error('Ошибка при загрузке отзывов');
+                    }
+                    return await res.json();
+                } catch (error) {
+                    console.error('Error fetching reviews:', error);
+                    return [];
+                }
+            }
+            
+            // Загрузка товаров из базы
+            let products = [];
+            async function fetchProducts() {
+                const res = await fetch('http://localhost:3000/api/products');
+                return await res.json();
+            }
+            
+            // Заполнение select и отображение отзывов после загрузки товаров
+            async function initReviewsPage() {
+                products = await fetchProducts();
+            const productSelect = document.getElementById('reviewProduct');
+                productSelect.innerHTML = '<option value="">Выберите товар</option>';
+            products.forEach(product => {
+                const option = document.createElement('option');
+                    option.value = product.id_products;
+                option.textContent = product.title;
+                productSelect.appendChild(option);
+            });
+                await renderReviews();
+            }
+            
+            // Обновлённая функция отображения отзывов
+            async function renderReviews() {
+                try {
+                    reviews = await fetchReviews();
+                    const reviewsList = document.getElementById('reviewsList');
+                    reviewsList.innerHTML = '';
+                    if (reviews.length === 0) {
+                        reviewsList.innerHTML = '<div class="no-reviews">Пока нет отзывов. Будьте первым!</div>';
+                        return;
+                    }
+                    reviews.forEach(review => {
+                        const product = products.find(p => p.id_products === review.product_id);
+                        const productName = product ? product.title : 'Товар';
+                        const reviewElement = document.createElement('div');
+                        reviewElement.classList.add('review');
+                        reviewElement.innerHTML = `
+                            <div class="review-header">
+                                <div>
+                                    <span class="review-author">${review.author}</span>
+                                    <span class="review-date">${new Date(review.date).toLocaleDateString('ru-RU')}</span>
+                                </div>
+                                <div class="review-product">${productName}</div>
+                            </div>
+                            <div class="review-rating">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</div>
+                            <div class="review-text">${review.text}</div>
+                        `;
+                        reviewsList.appendChild(reviewElement);
+                    });
+                } catch (error) {
+                    console.error('Error rendering reviews:', error);
+                    const reviewsList = document.getElementById('reviewsList');
+                    reviewsList.innerHTML = '<div class="no-reviews">Ошибка при загрузке отзывов</div>';
+                }
+            }
+            
+            // Инициализация страницы отзывов
+            initReviewsPage();
+            
+            // Обработчик формы отзыва
+            document.getElementById('newReviewForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('reviewName').value;
+                const productId = parseInt(document.getElementById('reviewProduct').value);
+                const rating = parseInt(document.querySelector('input[name="rating"]:checked')?.value);
+                const text = document.getElementById('reviewText').value;
+                if (!name || !productId || !rating || !text) {
+                    alert('Пожалуйста, заполните все поля');
+                    return;
+                }
+                const product = products.find(p => p.id_products === productId);
+                if (!product) {
+                    alert('Выбранного товара не существует!');
+                    return;
+                }
+                try {
+                    const response = await fetch('http://localhost:3000/api/reviews', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            product_id: productId,
+                            author: name,
+                            rating: rating,
+                            text: text
+                        })
+                    });
+                    if (!response.ok) {
+                        throw new Error('Ошибка при отправке отзыва');
+                    }
+                    this.reset();
+                    await renderReviews();
+                    alert('Спасибо за ваш отзыв!');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте еще раз.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

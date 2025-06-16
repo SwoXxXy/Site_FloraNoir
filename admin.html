@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora Noir — Админ-панель</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .login-form input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .login-form button {
+            padding: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .login-form button:hover {
+            background-color: #34495e;
+        }
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .admin-content {
+            display: none;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Стили для вкладок */
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+        }
+
+        .tab-btn:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Стили для истории операций */
+        .history-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .history-filters select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .history-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .history-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .history-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .history-icon.add {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .history-icon.remove {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .history-icon.order {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .history-icon.update {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .history-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .history-date {
+            color: #999;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .no-history {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginForm">
+        <h2>Вход в админ-панель</h2>
+        <form class="login-form" id="authForm">
+            <input type="text" id="username" placeholder="Имя пользователя" required>
+            <input type="password" id="password" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+        </form>
+        <p class="error-message" id="errorMessage"></p>
+    </div>
+
+    <div class="admin-content" id="adminContent">
+        <button class="logout-btn" id="logoutBtn">Выйти</button>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="logo.svg" alt="Flora Noir" class="logo">
+        </div>
+        <div class="burger-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+        <ul class="nav-links">
+                <li><a href="index.html">Главная</a></li>
+                <li><a href="shop.html">Магазин</a></li>
+                <li><a href="index.html#cart">Корзина <span id="cartCounter">0</span></a></li>
+            <li><a href="index.html#contacts">Контакты</a></li>
+            <li><a href="reviews.html">Отзывы</a></li>
+            <li><a href="admin.html" class="admin-link active">Админ</a></li>
+        </ul>
+    </nav>
+
+    <main class="admin-page">
+        <div class="admin-container">
+            <h1>Админ-панель</h1>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="products">Товары</button>
+                <button class="tab-btn" data-tab="orders">Заказы</button>
+                <button class="tab-btn" data-tab="stats">Статистика</button>
+                <button class="tab-btn" data-tab="reviews">Отзывы</button>
+                    <button class="tab-btn" data-tab="history">История</button>
+            </div>
+            
+            <div class="tab-content active" id="products">
+                <div class="admin-actions">
+                    <button class="btn-primary" id="addProductBtn">Добавить товар</button>
+                </div>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Название</th>
+                            <th>Цена</th>
+                            <th>Категория</th>
+                            <th>Наличие</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTable">
+                        <!-- Товары будут загружены через JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="orders">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID заказа</th>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTable">
+                        <!-- Заказы будут загружены через JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="stats">
+                <div class="stats-container">
+                    <div class="stats-card">
+                        <h3>Продажи по месяцам</h3>
+                        <div class="chart-filters">
+                            <select id="yearFilter">
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                            </select>
+                        </div>
+                <div class="chart-container">
+                            <canvas id="monthlySalesChart"></canvas>
+                        </div>
+                        <div class="stats-summary">
+                            <div class="summary-item">
+                                <div class="value" id="totalSales">0 ₽</div>
+                                <div class="label">Общая сумма</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="avgOrderValue">0 ₽</div>
+                                <div class="label">Средний чек</div>
+                            </div>
+                        </div>
+                </div>
+                
+                    <div class="stats-card">
+                        <h3>Популярные товары</h3>
+                        <div class="chart-filters">
+                            <select id="periodFilter">
+                                <option value="month">За месяц</option>
+                                <option value="quarter">За квартал</option>
+                                <option value="year">За год</option>
+                            </select>
+                        </div>
+                <div class="chart-container">
+                            <canvas id="topProductsChart"></canvas>
+                        </div>
+                        <div class="stats-summary">
+                            <div class="summary-item">
+                                <div class="value" id="totalProducts">0</div>
+                                <div class="label">Всего товаров</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="value" id="totalOrders">0</div>
+                                <div class="label">Всего заказов</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="reviews">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Товар</th>
+                            <th>Автор</th>
+                            <th>Отзыв</th>
+                            <th>Рейтинг</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewsTable">
+                        <!-- Отзывы будут загружены через JS -->
+                    </tbody>
+                </table>
+            </div>
+
+                <div class="tab-content" id="history">
+                    <div class="history-filters">
+                        <select id="adminTypeFilter">
+                            <option value="all">Все операции</option>
+                            <option value="add">Добавление в корзину</option>
+                            <option value="remove">Удаление из корзины</option>
+                            <option value="order">Оформление заказа</option>
+                            <option value="update">Изменение количества</option>
+                        </select>
+                        <select id="adminDateFilter">
+                            <option value="all">За все время</option>
+                            <option value="today">Сегодня</option>
+                            <option value="week">За неделю</option>
+                            <option value="month">За месяц</option>
+                        </select>
+                    </div>
+
+                    <div class="history-list" id="adminHistoryList">
+                        <!-- История будет загружена через JS -->
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно для добавления/редактирования товара -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Добавить товар</h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label for="productTitle">Название:</label>
+                    <input type="text" id="productTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Цена:</label>
+                    <input type="number" id="productPrice" required>
+                </div>
+                <div class="form-group">
+                    <label for="productType">Категория:</label>
+                    <select id="productType" required>
+                        <option value="Букеты">Букеты</option>
+                        <option value="Комнатные">Комнатные растения</option>
+                        <option value="Свадебные">Свадебные букеты</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productOccasion">Повод (необязательно):</label>
+                    <select id="productOccasion">
+                        <option value="">Нет</option>
+                        <option value="8 Марта">8 Марта</option>
+                        <option value="День рождения">День рождения</option>
+                        <option value="Свадьба">Свадьба</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productStock">Количество на складе:</label>
+                    <input type="number" id="productStock" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Описание:</label>
+                    <textarea id="productDescription" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productComposition">Состав (для букетов):</label>
+                    <textarea id="productComposition" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productCare">Уход (для растений):</label>
+                    <textarea id="productCare" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">Изображение (URL):</label>
+                    <input type="text" id="productImage" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                    <button type="button" class="btn-secondary" id="cancelBtn">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для просмотра заказа -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Заказ #<span id="orderId"></span></h2>
+            
+            <div class="order-info">
+                <p><strong>Статус:</strong> 
+                    <select id="orderStatusSelect" class="status-select">
+                        <option value="pending">В ожидании</option>
+                        <option value="processing">В обработке</option>
+                        <option value="completed">Выполнен</option>
+                        <option value="cancelled">Отменён</option>
+                    </select>
+                </p>
+                <p><strong>Дата заказа:</strong> <span id="orderDate"></span></p>
+                <p><strong>Клиент:</strong> <span id="orderCustomer"></span></p>
+                <p><strong>Телефон:</strong> <span id="orderPhone"></span></p>
+                <p><strong>Адрес:</strong> <span id="orderAddress"></span></p>
+                <p><strong>Комментарий:</strong> <span id="orderComment"></span></p>
+            </div>
+            
+            <h3>Товары в заказе:</h3>
+            <table class="order-items-table">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody id="orderItems">
+                    <!-- Товары заказа будут загружены через JS -->
+                </tbody>
+            </table>
+            
+            <div class="order-total">
+                <strong>Итого:</strong> <span id="orderTotal">0</span> ₽
+            </div>
+
+            <div class="status-history">
+                <h3>История статусов</h3>
+                <div class="status-timeline" id="statusTimeline">
+                    <!-- История статусов будет загружена через JS -->
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn-primary" id="saveOrderBtn">Сохранить изменения</button>
+                <button class="btn-secondary" id="closeOrderBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <img src="logo.svg" alt="Flora Noir" class="footer-logo">
+            <p>© 2023 Flora Noir. Все права защищены.</p>
+        </div>
+    </footer>
+    </div>
+
+    <script>
+        // Проверяем статус аутентификации при загрузке страницы
+        fetch('/api/auth/check')
+            .then(response => {
+                if (response.ok) {
+                    showAdminPanel();
+                }
+            })
+            .catch(err => console.error('Ошибка проверки аутентификации:', err));
+
+        // Обработка входа
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAdminPanel();
+                } else {
+                    document.getElementById('errorMessage').textContent = data.error;
+                }
+            } catch (err) {
+                document.getElementById('errorMessage').textContent = 'Ошибка при входе. Попробуйте позже.';
+            }
+        });
+
+        // Обработка выхода
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                showLoginForm();
+            } catch (err) {
+                console.error('Ошибка при выходе:', err);
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка переключения вкладок
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            function switchTab(tabId) {
+                // Убираем активный класс со всех кнопок и контента
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Добавляем активный класс нужной кнопке и контенту
+                const activeButton = document.querySelector(`[data-tab="${tabId}"]`);
+                const activeContent = document.getElementById(tabId);
+                
+                if (activeButton && activeContent) {
+                    activeButton.classList.add('active');
+                    activeContent.classList.add('active');
+                    
+                    // Если открыта вкладка истории, обновляем её содержимое
+                    if (tabId === 'history') {
+                        displayAdminHistory();
+                    }
+                }
+            }
+
+            // Добавляем обработчики для кнопок
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Обработка истории операций
+            const adminTypeFilter = document.getElementById('adminTypeFilter');
+            const adminDateFilter = document.getElementById('adminDateFilter');
+            const adminHistoryList = document.getElementById('adminHistoryList');
+
+            function displayAdminHistory() {
+                const typeValue = adminTypeFilter.value;
+                const dateValue = adminDateFilter.value;
+                const history = JSON.parse(localStorage.getItem('operations_history')) || [];
+
+                let filteredHistory = history;
+
+                // Фильтрация по типу операции
+                if (typeValue !== 'all') {
+                    filteredHistory = filteredHistory.filter(op => op.type === typeValue);
+                }
+
+                // Фильтрация по дате
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const week = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const month = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+                if (dateValue !== 'all') {
+                    filteredHistory = filteredHistory.filter(op => {
+                        const opDate = new Date(op.date);
+                        switch(dateValue) {
+                            case 'today':
+                                return opDate >= today;
+                            case 'week':
+                                return opDate >= week;
+                            case 'month':
+                                return opDate >= month;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+
+                // Сортировка по дате (новые сверху)
+                filteredHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                if (filteredHistory.length === 0) {
+                    adminHistoryList.innerHTML = '<div class="no-history">История операций пуста</div>';
+                    return;
+                }
+
+                adminHistoryList.innerHTML = '';
+                filteredHistory.forEach(op => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+
+                    let icon, title, details;
+                    switch(op.type) {
+                        case 'add':
+                            icon = '<i class="fas fa-cart-plus"></i>';
+                            title = `Добавление в корзину: ${op.productTitle}`;
+                            details = `Количество: ${op.quantity}`;
+                            break;
+                        case 'remove':
+                            icon = '<i class="fas fa-trash"></i>';
+                            title = `Удаление из корзины: ${op.productTitle}`;
+                            details = `Количество: ${op.quantity}`;
+                            break;
+                        case 'order':
+                            icon = '<i class="fas fa-shopping-bag"></i>';
+                            title = 'Оформление заказа';
+                            details = `Сумма: ${op.amount} ₽, Товаров: ${op.quantity}`;
+                            break;
+                        case 'update':
+                            icon = '<i class="fas fa-sync-alt"></i>';
+                            title = `Изменение количества: ${op.productTitle}`;
+                            details = `Новое количество: ${op.quantity}`;
+                            break;
+                    }
+
+                    item.innerHTML = `
+                        <div class="history-icon ${op.type}">${icon}</div>
+                        <div class="history-content">
+                            <div class="history-title">${title}</div>
+                            <div class="history-details">${details}</div>
+                        </div>
+                        <div class="history-date">${new Date(op.date).toLocaleString()}</div>
+                    `;
+
+                    adminHistoryList.appendChild(item);
+                });
+            }
+
+            // Обработчики фильтров истории
+            if (adminTypeFilter) adminTypeFilter.addEventListener('change', displayAdminHistory);
+            if (adminDateFilter) adminDateFilter.addEventListener('change', displayAdminHistory);
+        });
+
+        // Добавляем функции для работы с графиками
+        function initializeCharts() {
+            // График продаж по месяцам
+            const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+            const monthlySalesChart = new Chart(monthlySalesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+                    datasets: [{
+                        label: 'Продажи',
+                        data: [],
+                        borderColor: '#8B4513',
+                        backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString() + ' ₽';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' ₽';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // График популярных товаров
+            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+            const topProductsChart = new Chart(topProductsCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Количество продаж',
+                        data: [],
+                        backgroundColor: '#8B4513',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Обработчики фильтров
+            document.getElementById('yearFilter').addEventListener('change', updateMonthlySales);
+            document.getElementById('periodFilter').addEventListener('change', updateTopProducts);
+
+            // Функции обновления данных
+            function updateMonthlySales() {
+                const year = document.getElementById('yearFilter').value;
+                // Здесь будет запрос к API для получения данных о продажах
+                const mockData = generateMockSalesData();
+                
+                monthlySalesChart.data.datasets[0].data = mockData;
+                monthlySalesChart.update();
+                
+                // Обновляем сводную информацию
+                const total = mockData.reduce((a, b) => a + b, 0);
+                document.getElementById('totalSales').textContent = total.toLocaleString() + ' ₽';
+                document.getElementById('avgOrderValue').textContent = 
+                    Math.round(total / mockData.length).toLocaleString() + ' ₽';
+            }
+
+            function updateTopProducts() {
+                const period = document.getElementById('periodFilter').value;
+                // Здесь будет запрос к API для получения данных о популярных товарах
+                const mockData = generateMockProductsData();
+                
+                topProductsChart.data.labels = mockData.labels;
+                topProductsChart.data.datasets[0].data = mockData.values;
+                topProductsChart.update();
+                
+                // Обновляем сводную информацию
+                document.getElementById('totalProducts').textContent = 
+                    mockData.values.reduce((a, b) => a + b, 0);
+                document.getElementById('totalOrders').textContent = 
+                    Math.round(Math.random() * 100);
+            }
+
+            // Генерация тестовых данных
+            function generateMockSalesData() {
+                return Array.from({length: 12}, () => Math.round(Math.random() * 100000));
+            }
+
+            function generateMockProductsData() {
+                const products = ['Букет роз', 'Орхидея', 'Тюльпаны', 'Пионы', 'Лилии'];
+                const values = products.map(() => Math.round(Math.random() * 50));
+                return {
+                    labels: products,
+                    values: values
+                };
+            }
+
+            // Инициализация данных
+            updateMonthlySales();
+            updateTopProducts();
+        }
+
+        // Вызываем инициализацию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        // Функция для отображения заказов
+        function displayOrders() {
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const ordersTable = document.getElementById('ordersTable');
+            
+            ordersTable.innerHTML = '';
+            
+            // Сортируем заказы по дате (новые сначала)
+            const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedOrders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <tr class="order-row">
+                        <td>#${order.id}</td>
+                        <td>${isNaN(new Date(order.date)) ? '—' : new Date(order.date).toLocaleDateString('ru-RU', {day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'})}</td>
+                        <td>${order.total.toLocaleString()} ₽</td>
+                        <td>
+                            <span class="order-status status-${order.status}">
+                                ${getStatusIcon(order.status)}
+                                ${getStatusText(order.status)}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="order-actions">
+                                <button class="action-btn complete-btn" onclick="completeOrder(${order.id})" title="Выполнить">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="action-btn cancel-btn" onclick="updateOrderStatus(${order.id}, 'cancelled')" title="Отменить">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteOrder(${order.id})" title="Удалить">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                ordersTable.appendChild(tr);
+            });
+        }
+
+        // Функция для получения иконки статуса
+        function getStatusIcon(status) {
+            const icons = {
+                pending: '<i class="fas fa-clock"></i>',
+                processing: '<i class="fas fa-cog fa-spin"></i>',
+                completed: '<i class="fas fa-check"></i>',
+                cancelled: '<i class="fas fa-times"></i>'
+            };
+            return icons[status] || '';
+        }
+
+        // Функция для получения текста статуса
+        function getStatusText(status) {
+            const texts = {
+                pending: 'В ожидании',
+                processing: 'В обработке',
+                completed: 'Выполнен',
+                cancelled: 'Отменён'
+            };
+            return texts[status] || status;
+        }
+
+        // Функция для просмотра заказа
+        function viewOrder(orderId) {
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+
+            // Заполняем данные заказа
+            document.getElementById('orderId').textContent = order.id;
+            document.getElementById('orderDate').textContent = new Date(order.date).toLocaleString();
+            document.getElementById('orderCustomer').textContent = order.customer;
+            document.getElementById('orderPhone').textContent = order.phone;
+            document.getElementById('orderAddress').textContent = order.address;
+            document.getElementById('orderComment').textContent = order.comment || '-';
+            document.getElementById('orderStatusSelect').value = order.status;
+            document.getElementById('orderTotal').textContent = order.total.toLocaleString();
+
+            // Заполняем товары
+            const orderItems = document.getElementById('orderItems');
+            orderItems.innerHTML = '';
+            order.items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.title}</td>
+                    <td>${item.price.toLocaleString()} ₽</td>
+                    <td>${item.quantity}</td>
+                    <td>${(item.price * item.quantity).toLocaleString()} ₽</td>
+                `;
+                orderItems.appendChild(tr);
+            });
+
+            // Заполняем историю статусов
+            const statusTimeline = document.getElementById('statusTimeline');
+            statusTimeline.innerHTML = '';
+            order.statusHistory.forEach(status => {
+                const div = document.createElement('div');
+                div.className = 'status-item';
+                div.innerHTML = `
+                    <div class="status-date">${new Date(status.date).toLocaleString()}</div>
+                    <div class="status-text">
+                        <span class="order-status status-${status.status}">
+                            ${getStatusIcon(status.status)}
+                            ${getStatusText(status.status)}
+                        </span>
+                    </div>
+                `;
+                statusTimeline.appendChild(div);
+            });
+
+            // Показываем модальное окно
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        // Обновляем функцию для обработки статусов заказов
+        function updateOrderStatus(orderId, newStatus) {
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex === -1) return;
+
+            // Добавляем новый статус в историю
+            if (!orders[orderIndex].statusHistory) {
+                orders[orderIndex].statusHistory = [];
+            }
+            
+            orders[orderIndex].statusHistory.push({
+                status: newStatus,
+                date: new Date().toISOString()
+            });
+            
+            // Обновляем текущий статус
+            orders[orderIndex].status = newStatus;
+            
+            // Сохраняем изменения
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            // Обновляем отображение
+            displayOrders();
+        }
+
+        // Обновляем функцию удаления заказа
+        function deleteOrder(orderId) {
+            const confirmDelete = confirm('Вы уверены, что хотите удалить этот заказ?');
+            if (!confirmDelete) return;
+            
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const updatedOrders = orders.filter(o => o.id !== orderId);
+            
+            // Сохраняем изменения
+            localStorage.setItem('orders', JSON.stringify(updatedOrders));
+            
+            // Обновляем отображение
+            displayOrders();
+        }
+
+        // Добавляем функции для работы с отзывами
+        function displayReviews() {
+            fetch('/api/reviews')
+                .then(res => res.json())
+                .then(reviews => {
+                    const reviewsTable = document.getElementById('reviewsTable');
+                    reviewsTable.innerHTML = '';
+                    if (reviews.length === 0) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td colspan="7" class="no-data">Отзывов пока нет</td>
+                        `;
+                        reviewsTable.appendChild(tr);
+                        return;
+                    }
+                    reviews.forEach(review => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>#${review.id}</td>
+                            <td>${review.productId}</td>
+                            <td>${review.author}</td>
+                            <td class="review-text-cell">${review.text}</td>
+                            <td>
+                                <div class="rating-display">
+                                    ${getStarRating(review.rating)}
+                                </div>
+                            </td>
+                            <td>${new Date(review.date).toLocaleDateString('ru-RU')}</td>
+                            <td>
+                                <div class="review-actions">
+                                    <button class="action-btn delete-btn" onclick="deleteReview(${review.id})" title="Удалить">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        reviewsTable.appendChild(tr);
+                    });
+                });
+        }
+
+        function getStarRating(rating) {
+            let stars = '';
+            for (let i = 0; i < 5; i++) {
+                if (i < rating) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            return stars;
+        }
+
+        function deleteReview(reviewId) {
+            const confirmDelete = confirm('Вы уверены, что хотите удалить этот отзыв?');
+            if (!confirmDelete) return;
+            fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Ошибка при удалении отзыва');
+                    displayReviews();
+                })
+                .catch(() => alert('Ошибка при удалении отзыва.'));
+        }
+
+        // Добавляем обработчик для вкладки 'Отзывы'
+        document.querySelector('[data-tab="reviews"]').addEventListener('click', displayReviews);
+
+        // Инициализация при загрузке страницы
+        displayOrders();
+        displayReviews();
+
+        function completeOrder(orderId) {
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex === -1) return;
+
+            // Добавляем новый статус в историю
+            if (!orders[orderIndex].statusHistory) {
+                orders[orderIndex].statusHistory = [];
+            }
+            
+            orders[orderIndex].statusHistory.push({
+                status: 'completed',
+                date: new Date().toISOString()
+            });
+            
+            // Обновляем текущий статус
+            orders[orderIndex].status = 'completed';
+            
+            // Сохраняем изменения
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            // Обновляем отображение
+            displayOrders();
+        }
+    </script>
+    <script src="admin.js"></script>
+</body>
+</html>

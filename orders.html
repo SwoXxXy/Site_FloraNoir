@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora Noir — Мои заказы</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="logo.svg" alt="Flora Noir" class="logo">
+        </div>
+        <div class="burger-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="shop.html">Магазин</a></li>
+            <li><a href="index.html#cart">Корзина <span id="cartCounter">0</span></a></li>
+            <li><a href="index.html#contacts">Контакты</a></li>
+            <li><a href="reviews.html">Отзывы</a></li>
+            <li><a href="admin.html" class="admin-link">Админ</a></li>
+        </ul>
+    </nav>
+
+    <main class="orders-page">
+        <div class="orders-header">
+            <h1>Мои заказы</h1>
+            <div class="orders-summary">
+                <div class="summary-card">
+                    <i class="fas fa-shopping-bag"></i>
+                    <div class="summary-info">
+                        <span class="summary-value" id="totalOrders">0</span>
+                        <span class="summary-label">Всего заказов</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="summary-info">
+                        <span class="summary-value" id="completedOrders">0</span>
+                        <span class="summary-label">Выполнено</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <i class="fas fa-clock"></i>
+                    <div class="summary-info">
+                        <span class="summary-value" id="pendingOrders">0</span>
+                        <span class="summary-label">В обработке</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="orders-filters">
+            <div class="filter-group">
+                <label for="statusFilter">Статус:</label>
+                <select id="statusFilter">
+                    <option value="all">Все заказы</option>
+                    <option value="pending">В обработке</option>
+                    <option value="processing">Выполняются</option>
+                    <option value="completed">Выполненные</option>
+                    <option value="cancelled">Отмененные</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="dateFilter">Период:</label>
+                <select id="dateFilter">
+                    <option value="all">За все время</option>
+                    <option value="week">За неделю</option>
+                    <option value="month">За месяц</option>
+                    <option value="year">За год</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="orders-container">
+            <div id="ordersList" class="orders-list">
+                <!-- Заказы будут загружены через JS -->
+            </div>
+
+            <div class="no-orders" style="display: none;">
+                <div class="no-orders-content">
+                    <i class="fas fa-box-open"></i>
+                    <h2>У вас пока нет заказов</h2>
+                    <p>Самое время выбрать красивый букет!</p>
+                    <a href="shop.html" class="btn-primary">Перейти в магазин</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <img src="logo.svg" alt="Flora Noir" class="footer-logo">
+            <p>© 2023 Flora Noir. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Корзина
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCounter = document.getElementById('cartCounter');
+            
+            function updateCartCounter() {
+                cartCounter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            }
+            
+            updateCartCounter();
+            
+            // Данные товаров
+            const products = JSON.parse(localStorage.getItem('products')) || [];
+            
+            // Заказы
+            let orders = [];
+            async function fetchOrders() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/orders');
+                    orders = await response.json();
+                } catch (e) {
+                    orders = [];
+                }
+            }
+            
+            // Обновляем сводную информацию
+            function updateOrdersSummary() {
+                document.getElementById('totalOrders').textContent = orders.length;
+                document.getElementById('completedOrders').textContent = orders.filter(o => o.status_order === 'completed').length;
+                document.getElementById('pendingOrders').textContent = orders.filter(o => o.status_order === 'pending' || o.status_order === 'processing').length;
+            }
+            
+            // Фильтрация заказов
+            function filterOrders() {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const dateFilter = document.getElementById('dateFilter').value;
+                
+                let filteredOrders = [...orders];
+                
+                // Фильтр по статусу
+                if (statusFilter !== 'all') {
+                    filteredOrders = filteredOrders.filter(order => order.status_order === statusFilter);
+                }
+                
+                // Фильтр по дате
+                const now = new Date();
+                if (dateFilter !== 'all') {
+                    filteredOrders = filteredOrders.filter(order => {
+                        const orderDate = new Date(order.date_order);
+                        switch(dateFilter) {
+                            case 'week':
+                                return (now - orderDate) <= 7 * 24 * 60 * 60 * 1000;
+                            case 'month':
+                                return (now - orderDate) <= 30 * 24 * 60 * 60 * 1000;
+                            case 'year':
+                                return (now - orderDate) <= 365 * 24 * 60 * 60 * 1000;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+                
+                return filteredOrders;
+            }
+            
+            // Отображаем заказы
+            async function renderOrders() {
+                await fetchOrders();
+                const ordersList = document.getElementById('ordersList');
+                const noOrders = document.querySelector('.no-orders');
+                const filteredOrders = filterOrders();
+                
+                if (orders.length === 0) {
+                    ordersList.style.display = 'none';
+                    noOrders.style.display = 'block';
+                    return;
+                }
+                
+                noOrders.style.display = 'none';
+                ordersList.style.display = 'grid';
+                ordersList.innerHTML = '';
+                
+                // Сортируем заказы по дате (новые сначала)
+                filteredOrders.sort((a, b) => new Date(b.date_order) - new Date(a.date_order));
+                
+                filteredOrders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.classList.add('order-card');
+                    const statusClass = `status-${order.status_order}`;
+                    const statusText = {
+                        'pending': 'В обработке',
+                        'processing': 'Выполняется',
+                        'completed': 'Выполнен',
+                        'cancelled': 'Отменён'
+                    }[order.status_order];
+
+                    const orderDate = new Date(order.date_order);
+                    const formattedDate = orderDate.toLocaleDateString('ru-RU', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    const formattedTime = orderDate.toLocaleTimeString('ru-RU', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    orderCard.innerHTML = `
+                        <div class="order-header">
+                            <div class="order-info">
+                                <span class="order-id">Заказ #${order.id_order}</span>
+                                <div class="order-dates">
+                                    <span class="order-date">
+                                        <i class="far fa-calendar-alt"></i>
+                                        ${formattedDate}
+                                    </span>
+                                    <span class="order-time">
+                                        <i class="far fa-clock"></i>
+                                        ${formattedTime}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="order-status ${statusClass}">
+                                <i class="fas fa-${statusClass.replace('status-', '')}"></i>
+                                ${statusText}
+                            </span>
+                        </div>
+                        <div class="order-footer">
+                            <div class="order-total">
+                                <span>Итого:</span>
+                                <strong>${order.total_sum} ₽</strong>
+                            </div>
+                        </div>
+                    `;
+                    ordersList.appendChild(orderCard);
+                });
+
+                // Проверяем количество заказов и устанавливаем минимальную высоту
+                const ordersContainer = document.querySelector('.orders-container');
+                if (filteredOrders.length <= 2) {
+                    ordersContainer.classList.add('min-height');
+                } else {
+                    ordersContainer.classList.remove('min-height');
+                }
+            }
+            
+            // Обработчики фильтров
+            document.getElementById('statusFilter').addEventListener('change', renderOrders);
+            document.getElementById('dateFilter').addEventListener('change', renderOrders);
+            
+            // Инициализация
+            updateOrdersSummary();
+            await renderOrders();
+        });
+    </script>
+</body>
+</html>

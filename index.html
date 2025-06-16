@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <title>Flora Noir — Магазин премиум-цветов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Навигация -->
+<nav class="navbar">
+    <div class="nav-brand">
+        <img src="logo.svg" alt="Flora Noir" class="logo">
+    </div>
+    <div class="burger-menu">
+        <i class="fas fa-bars"></i>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#home" class="active">Главная</a></li>
+        <li><a href="shop.html">Магазин</a></li>
+        <li><a href="#cart">Корзина <span id="cartCounter">0</span></a></li>
+        <li><a href="#contacts">Контакты</a></li>
+        <li><a href="reviews.html">Отзывы</a></li>
+        <li><a href="admin.html" class="admin-link">Админ</a></li>
+    </ul>
+</nav>
+
+    <!-- Контентные секции -->
+    <section id="home" class="page active">
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Изысканные цветочные композиции</h1>
+                <p>Премиальные букеты для особых моментов вашей жизни</p>
+                <a href="shop.html" class="btn-primary">В магазин</a>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature-item">
+                <i class="fas fa-truck"></i>
+                <h3>Быстрая доставка</h3>
+                <p>Доставим ваш заказ в течение 2 часов</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-gift"></i>
+                <h3>Подарочная упаковка</h3>
+                <p>Бесплатная упаковка для всех заказов</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-leaf"></i>
+                <h3>Свежие цветы</h3>
+                <p>Только свежесрезанные цветы</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="shop" class="page">
+        <h2 class="section-title">Наш магазин</h2>
+        <div class="filters">
+            <div class="filter-group">
+                <label for="typeFilter">Категория:</label>
+                <select id="typeFilter">
+                    <option value="all">Все</option>
+                    <option value="Букеты">Букеты</option>
+                    <option value="Комнатные">Комнатные растения</option>
+                    <option value="Свадебные">Свадебные букеты</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="occasionFilter">Повод:</label>
+                <select id="occasionFilter">
+                    <option value="all">Любой</option>
+                    <option value="8 Марта">8 Марта</option>
+                    <option value="День рождения">День рождения</option>
+                    <option value="Свадьба">Свадьба</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="priceFilter">Цена:</label>
+                <select id="priceFilter">
+                    <option value="all">Любая</option>
+                    <option value="0-2000">До 2000 руб.</option>
+                    <option value="2000-4000">2000-4000 руб.</option>
+                    <option value="4000-10000">От 4000 руб.</option>
+                </select>
+            </div>
+        </div>
+        <div class="product-grid" id="productList"></div>
+    </section>
+
+    <section id="cart" class="page">
+        <h2 class="section-title">Ваша корзина</h2>
+        <div class="cart-container">
+            <div class="cart-items" id="cartItems">
+                <p class="empty-cart">Ваша корзина пуста</p>
+            </div>
+            <div class="cart-summary">
+                <h3>Итого:</h3>
+                <p class="total-price">0 руб.</p>
+                <button class="btn-primary" id="checkoutBtn">Оформить заказ</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacts" class="page">
+        <h2 class="section-title">Контакты</h2>
+        <div class="contact-container">
+            <div class="contact-info">
+                <h3>Наши контакты</h3>
+                <p><i class="fas fa-map-marker-alt"></i> Москва, ул. Цветочная, 15</p>
+                <p><i class="fas fa-phone"></i> +7 (495) 123-45-67</p>
+                <p><i class="fas fa-envelope"></i> info@floranoir.ru</p>
+                <p><i class="fas fa-clock"></i> Ежедневно с 9:00 до 21:00</p>
+                
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div class="contact-map">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2245.373789429745!2d37.61842331593095!3d55.75169998055362!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46b54a5a738fa419%3A0x7c347d506b52311f!2z0JrRgNCw0YHQvdCw0Y8g0J_RgNC10YHQvdC40LbQsNGA0LjRjw!5e0!3m2!1sru!2sru!4v1620000000000!5m2!1sru!2sru" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <img src="logo.svg" alt="Flora Noir" class="footer-logo">
+            <p>© 2023 Flora Noir. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

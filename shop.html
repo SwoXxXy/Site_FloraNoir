@@ -1,0 +1,108 @@
+<!-- shop.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flora Noir — Магазин</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="logo.svg" alt="Flora Noir" class="logo">
+        </div>
+        <div class="burger-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="shop.html" class="active">Магазин</a></li>
+            <li><a href="index.html#cart">Корзина <span id="cartCounter">0</span></a></li>
+            <li><a href="index.html#contacts">Контакты</a></li>
+            <li><a href="reviews.html">Отзывы</a></li>
+            <li><a href="admin.html" class="admin-link">Админ</a></li>
+        </ul>
+    </nav>
+
+    <main class="shop-page">
+        <section id="shop" class="page active">
+            <h2 class="section-title">Наш магазин</h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="typeFilter">Категория:</label>
+                    <select id="typeFilter">
+                        <option value="all">Все</option>
+                        <option value="Букеты">Букеты</option>
+                        <option value="Комнатные">Комнатные растения</option>
+                        <option value="Свадебные">Свадебные букеты</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="occasionFilter">Повод:</label>
+                    <select id="occasionFilter">
+                        <option value="all">Любой</option>
+                        <option value="8 Марта">8 Марта</option>
+                        <option value="День рождения">День рождения</option>
+                        <option value="Свадьба">Свадьба</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="priceFilter">Цена:</label>
+                    <select id="priceFilter">
+                        <option value="all">Любая</option>
+                        <option value="0-2000">До 2000 руб.</option>
+                        <option value="2000-4000">2000-4000 руб.</option>
+                        <option value="4000-10000">От 4000 руб.</option>
+                    </select>
+                </div>
+            </div>
+            <div class="product-grid" id="productList"></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <img src="logo.svg" alt="Flora Noir" class="footer-logo">
+            <p>© 2023 Flora Noir. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Инициализация магазина
+            if (typeof displayProducts === 'function') {
+                displayProducts();
+            }
+
+            // Обработчик поиска
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    displayProducts(this.value.toLowerCase());
+                });
+            }
+
+            // Обновление счетчика корзины
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCounter = document.getElementById('cartCounter');
+            if (cartCounter) {
+                cartCounter.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            }
+
+            // Мобильное меню
+            const burgerMenu = document.querySelector('.burger-menu');
+            const mobileNav = document.querySelector('.nav-links');
+            if (burgerMenu && mobileNav) {
+                burgerMenu.addEventListener('click', function() {
+                    mobileNav.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
