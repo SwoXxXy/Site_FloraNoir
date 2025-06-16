@@ -205,7 +205,7 @@ h1, h2, h3, h4 {
 }
 
 #cartCounter {
-    background: var(--pink);
+    background: var(--accent);
     color: white;
     border-radius: 50%;
     padding: 2px 6px;
@@ -271,7 +271,7 @@ h1, h2, h3, h4 {
 
 /* Главная страница */
 .hero {
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('hero-bg.jpg') center/cover no-repeat;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('HeroBG.jpg') center/cover no-repeat;
     height: 70vh;
     display: flex;
     align-items: center;
@@ -279,6 +279,8 @@ h1, h2, h3, h4 {
     color: white;
     text-align: center;
     margin-bottom: 3rem;
+    border-radius: 10px;
+    opacity: 80%;
 }
 
 .hero-content {
@@ -287,6 +289,7 @@ h1, h2, h3, h4 {
 }
 
 .hero h1 {
+    color: white;
     font-size: 3.5rem;
     margin-bottom: 1rem;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);

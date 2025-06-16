@@ -23,16 +23,11 @@ app.use(session({
     cookie: { secure: false } // set to true if using HTTPS
 }));
 
-console.log('Настройка сервера...');
-
 // Database configuration
 const config = {
     driver: 'msnodesqlv8',
     connectionString: `Driver={ODBC Driver 18 for SQL Server};Server=${process.env.DB_SERVER};Database=${process.env.DB_NAME};Trusted_Connection=yes;TrustServerCertificate=yes;`,
 };
-
-console.log('Подключение к базе данных...');
-console.log('Строка подключения:', config.connectionString);
 
 // Database connection pool
 const pool = new sql.ConnectionPool(config);
@@ -45,7 +40,6 @@ pool.on('error', err => {
 async function testDatabaseConnection() {
     try {
         await pool.connect();
-        console.log('Успешное подключение к базе данных');
         return true;
     } catch (err) {
         console.error('Ошибка при подключении к базе данных:', err);
@@ -272,7 +266,6 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Выход
 app.post('/api/auth/logout', (req, res) => {
-    console.log('Выход пользователя:', req.session.user?.username);
     req.session.destroy();
     res.json({ success: true });
 });
@@ -410,8 +403,6 @@ const PORT = process.env.PORT || 3001;
 testDatabaseConnection().then(connected => {
     if (connected) {
         app.listen(PORT, () => {
-            console.log(`Сервер запущен на порту ${PORT}`);
-            console.log(`Админ-панель доступна по адресу: http://localhost:${PORT}/admin.html`);
         });
     } else {
         console.error('Сервер не запущен из-за ошибки подключения к базе данных');

@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="shortcut icon" href="Logo.svg" />
     <style>
         .login-container {
             max-width: 400px;
@@ -499,7 +500,7 @@
     <footer>
         <div class="footer-content">
             <img src="logo.svg" alt="Flora Noir" class="footer-logo">
-            <p>© 2023 Flora Noir. Все права защищены.</p>
+            <p>© 2025 Flora Noir. Все права защищены.</p>
         </div>
     </footer>
     </div>
@@ -848,77 +849,6 @@
             // Обновляем отображение
             displayOrders();
         }
-
-        // Добавляем функции для работы с отзывами
-        function displayReviews() {
-            fetch('/api/reviews')
-                .then(res => res.json())
-                .then(reviews => {
-                    const reviewsTable = document.getElementById('reviewsTable');
-                    reviewsTable.innerHTML = '';
-                    if (reviews.length === 0) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td colspan="7" class="no-data">Отзывов пока нет</td>
-                        `;
-                        reviewsTable.appendChild(tr);
-                        return;
-                    }
-                    reviews.forEach(review => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>#${review.id}</td>
-                            <td>${review.productId}</td>
-                            <td>${review.author}</td>
-                            <td class="review-text-cell">${review.text}</td>
-                            <td>
-                                <div class="rating-display">
-                                    ${getStarRating(review.rating)}
-                                </div>
-                            </td>
-                            <td>${new Date(review.date).toLocaleDateString('ru-RU')}</td>
-                            <td>
-                                <div class="review-actions">
-                                    <button class="action-btn delete-btn" onclick="deleteReview(${review.id})" title="Удалить">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
-                        reviewsTable.appendChild(tr);
-                    });
-                });
-        }
-
-        function getStarRating(rating) {
-            let stars = '';
-            for (let i = 0; i < 5; i++) {
-                if (i < rating) {
-                    stars += '<i class="fas fa-star"></i>';
-                } else {
-                    stars += '<i class="far fa-star"></i>';
-                }
-            }
-            return stars;
-        }
-
-        function deleteReview(reviewId) {
-            const confirmDelete = confirm('Вы уверены, что хотите удалить этот отзыв?');
-            if (!confirmDelete) return;
-            fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Ошибка при удалении отзыва');
-                    displayReviews();
-                })
-                .catch(() => alert('Ошибка при удалении отзыва.'));
-        }
-
-        // Добавляем обработчик для вкладки 'Отзывы'
-        document.querySelector('[data-tab="reviews"]').addEventListener('click', displayReviews);
-
-        // Инициализация при загрузке страницы
-        displayOrders();
-        displayReviews();
 
         function completeOrder(orderId) {
             const orders = JSON.parse(localStorage.getItem('orders')) || [];

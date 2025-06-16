@@ -179,36 +179,27 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateMonthlySales() {
-        console.log('updateMonthlySales called');
         const year = parseInt(document.getElementById('yearFilter').value);
         fetchOrders().then(orders => {
             const salesByMonth = Array(12).fill(0);
             let hasData = false;
-            console.log('orders:', orders);
             orders.forEach(order => {
                 const date = new Date(order.date_order);
-                console.log('order', order.id_order, 'date:', date, 'year:', date.getFullYear(), 'month:', date.getMonth());
                 if (date.getFullYear() === year && Array.isArray(order.items)) {
-                    console.log('order', order.id_order, 'items:', order.items);
                     order.items.forEach(item => {
                         const month = date.getMonth();
                         const price = Number(item.price) || 0;
                         const quantity = Number(item.quantity) || 0;
                         const itemTotal = price * quantity;
-                        console.log('item:', item, 'month:', month, 'price:', price, 'quantity:', quantity, 'itemTotal:', itemTotal);
                         if (itemTotal > 0) {
                             salesByMonth[month] += itemTotal;
                             hasData = true;
                         }
                     });
-                } else {
-                    console.log('order', order.id_order, 'filtered out:', date.getFullYear(), year, Array.isArray(order.items));
                 }
             });
-            console.log('salesByMonth:', salesByMonth);
             monthlySalesChart.data.datasets[0].data = salesByMonth;
             monthlySalesChart.update();
-            console.log('salesByMonth:', salesByMonth);
             const total = salesByMonth.reduce((a, b) => a + b, 0);
             document.getElementById('totalSales').textContent = (hasData ? total : 0).toLocaleString() + ' ₽';
             const ordersWithItems = orders.filter(o => new Date(o.date_order).getFullYear() === year && Array.isArray(o.items) && o.items.length > 0);
