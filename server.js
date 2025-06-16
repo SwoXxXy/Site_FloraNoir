@@ -277,17 +277,27 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true });
 });
 
-// Пример для заказов (Orders):
-// Получить все заказы
+// Получить все заказы с позициями
 app.get('/api/orders', async (req, res) => {
     try {
         await pool.connect();
-        const result = await pool.request().query('SELECT * FROM Orders');
-        res.json(result.recordset);
+        const ordersResult = await pool.request().query('SELECT * FROM Orders');
+        const orders = ordersResult.recordset;
+        const itemsResult = await pool.request().query('SELECT * FROM OrderItems');
+        const items = itemsResult.recordset;
+        orders.forEach(order => {
+            order.items = items.filter(i => i.id_order === order.id_order).map(item => ({
+                id_products: item.id_products,
+                quantity: item.quantity,
+                price: item.price
+            }));
+        });
+        res.json(orders);
     } catch (err) {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 // Получить заказ по id_order
 app.get('/api/orders/:id', async (req, res) => {
     try {
@@ -304,17 +314,31 @@ app.get('/api/orders/:id', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 // Добавить заказ
 app.post('/api/orders', async (req, res) => {
     try {
-        const { total_sum, status_order, client_id } = req.body;
+        const { total_sum, status_order, client_id, items } = req.body;
         await pool.connect();
+        // Сохраняем заказ
         const result = await pool.request()
             .input('total_sum', sql.Decimal(10,2), total_sum)
             .input('status_order', sql.NVarChar, status_order)
             .input('client_id', sql.Int, client_id)
             .query(`INSERT INTO Orders (total_sum, status_order, client_id) VALUES (@total_sum, @status_order, @client_id); SELECT SCOPE_IDENTITY() AS id_order;`);
-        res.status(201).json({ id_order: result.recordset[0].id_order });
+        const id_order = result.recordset[0].id_order;
+        // Сохраняем позиции заказа
+        if (Array.isArray(items)) {
+            for (const item of items) {
+                await pool.request()
+                    .input('id_order', sql.Int, id_order)
+                    .input('id_products', sql.Int, item.id_products)
+                    .input('quantity', sql.Int, item.quantity)
+                    .input('price', sql.Decimal(10,2), item.price || 0)
+                    .query(`INSERT INTO OrderItems (id_order, id_products, quantity, price) VALUES (@id_order, @id_products, @quantity, @price);`);
+            }
+        }
+        res.status(201).json({ id_order });
     } catch (err) {
         res.status(500).json({ error: 'Internal server error' });
     }

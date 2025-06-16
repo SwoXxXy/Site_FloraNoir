@@ -293,8 +293,8 @@
                         <h3>Продажи по месяцам</h3>
                         <div class="chart-filters">
                             <select id="yearFilter">
+                                <option value="2025">2025</option>
                                 <option value="2024">2024</option>
-                                <option value="2023">2023</option>
                             </select>
                         </div>
                 <div class="chart-container">
@@ -688,143 +688,6 @@
             // Обработчики фильтров истории
             if (adminTypeFilter) adminTypeFilter.addEventListener('change', displayAdminHistory);
             if (adminDateFilter) adminDateFilter.addEventListener('change', displayAdminHistory);
-        });
-
-        // Добавляем функции для работы с графиками
-        function initializeCharts() {
-            // График продаж по месяцам
-            const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
-            const monthlySalesChart = new Chart(monthlySalesCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-                    datasets: [{
-                        label: 'Продажи',
-                        data: [],
-                        borderColor: '#8B4513',
-                        backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y.toLocaleString() + ' ₽';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString() + ' ₽';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // График популярных товаров
-            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
-            const topProductsChart = new Chart(topProductsCtx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Количество продаж',
-                        data: [],
-                        backgroundColor: '#8B4513',
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Обработчики фильтров
-            document.getElementById('yearFilter').addEventListener('change', updateMonthlySales);
-            document.getElementById('periodFilter').addEventListener('change', updateTopProducts);
-
-            // Функции обновления данных
-            function updateMonthlySales() {
-                const year = document.getElementById('yearFilter').value;
-                // Здесь будет запрос к API для получения данных о продажах
-                const mockData = generateMockSalesData();
-                
-                monthlySalesChart.data.datasets[0].data = mockData;
-                monthlySalesChart.update();
-                
-                // Обновляем сводную информацию
-                const total = mockData.reduce((a, b) => a + b, 0);
-                document.getElementById('totalSales').textContent = total.toLocaleString() + ' ₽';
-                document.getElementById('avgOrderValue').textContent = 
-                    Math.round(total / mockData.length).toLocaleString() + ' ₽';
-            }
-
-            function updateTopProducts() {
-                const period = document.getElementById('periodFilter').value;
-                // Здесь будет запрос к API для получения данных о популярных товарах
-                const mockData = generateMockProductsData();
-                
-                topProductsChart.data.labels = mockData.labels;
-                topProductsChart.data.datasets[0].data = mockData.values;
-                topProductsChart.update();
-                
-                // Обновляем сводную информацию
-                document.getElementById('totalProducts').textContent = 
-                    mockData.values.reduce((a, b) => a + b, 0);
-                document.getElementById('totalOrders').textContent = 
-                    Math.round(Math.random() * 100);
-            }
-
-            // Генерация тестовых данных
-            function generateMockSalesData() {
-                return Array.from({length: 12}, () => Math.round(Math.random() * 100000));
-            }
-
-            function generateMockProductsData() {
-                const products = ['Букет роз', 'Орхидея', 'Тюльпаны', 'Пионы', 'Лилии'];
-                const values = products.map(() => Math.round(Math.random() * 50));
-                return {
-                    labels: products,
-                    values: values
-                };
-            }
-
-            // Инициализация данных
-            updateMonthlySales();
-            updateTopProducts();
-        }
-
-        // Вызываем инициализацию при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeCharts();
         });
 
         // Функция для отображения заказов

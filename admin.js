@@ -168,16 +168,110 @@ document.addEventListener("DOMContentLoaded", function () {
     // Инициализация таблицы товаров
     renderProductsTable();
 
-    // Для функции отображения заказов в админке:
+    // === Функции для статистики ===
     async function fetchOrders() {
-        try {
-            const response = await fetch('http://localhost:3000/api/orders');
-            return await response.json();
-        } catch (e) {
-            return [];
-        }
+        const res = await fetch('http://localhost:3000/api/orders');
+        return await res.json();
+    }
+    async function fetchProducts() {
+        const res = await fetch('http://localhost:3000/api/products');
+        return await res.json();
     }
 
+    function updateMonthlySales() {
+        console.log('updateMonthlySales called');
+        const year = parseInt(document.getElementById('yearFilter').value);
+        fetchOrders().then(orders => {
+            const salesByMonth = Array(12).fill(0);
+            let hasData = false;
+            console.log('orders:', orders);
+            orders.forEach(order => {
+                const date = new Date(order.date_order);
+                console.log('order', order.id_order, 'date:', date, 'year:', date.getFullYear(), 'month:', date.getMonth());
+                if (date.getFullYear() === year && Array.isArray(order.items)) {
+                    console.log('order', order.id_order, 'items:', order.items);
+                    order.items.forEach(item => {
+                        const month = date.getMonth();
+                        const price = Number(item.price) || 0;
+                        const quantity = Number(item.quantity) || 0;
+                        const itemTotal = price * quantity;
+                        console.log('item:', item, 'month:', month, 'price:', price, 'quantity:', quantity, 'itemTotal:', itemTotal);
+                        if (itemTotal > 0) {
+                            salesByMonth[month] += itemTotal;
+                            hasData = true;
+                        }
+                    });
+                } else {
+                    console.log('order', order.id_order, 'filtered out:', date.getFullYear(), year, Array.isArray(order.items));
+                }
+            });
+            console.log('salesByMonth:', salesByMonth);
+            monthlySalesChart.data.datasets[0].data = salesByMonth;
+            monthlySalesChart.update();
+            console.log('salesByMonth:', salesByMonth);
+            const total = salesByMonth.reduce((a, b) => a + b, 0);
+            document.getElementById('totalSales').textContent = (hasData ? total : 0).toLocaleString() + ' ₽';
+            const ordersWithItems = orders.filter(o => new Date(o.date_order).getFullYear() === year && Array.isArray(o.items) && o.items.length > 0);
+            document.getElementById('avgOrderValue').textContent =
+                (hasData && ordersWithItems.length ? Math.round(total / ordersWithItems.length) : 0).toLocaleString() + ' ₽';
+        });
+    }
+
+    function updateTopProducts() {
+        const period = document.getElementById('periodFilter').value;
+        fetchOrders().then(orders => {
+            fetchProducts().then(products => {
+                const now = new Date();
+                let fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                if (period === 'quarter') fromDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                if (period === 'year') fromDate = new Date(now.getFullYear(), 0, 1);
+                const productSales = {};
+                let hasData = false;
+                orders.forEach(order => {
+                    const date = new Date(order.date_order);
+                    if (date >= fromDate && Array.isArray(order.items)) {
+                        order.items.forEach(item => {
+                            const qty = parseInt(item.quantity) || 0;
+                            if (qty > 0) {
+                                productSales[item.id_products] = (productSales[item.id_products] || 0) + qty;
+                                hasData = true;
+                            }
+                        });
+                    }
+                });
+                // Формируем данные для графика
+                const labels = [];
+                const values = [];
+                products.forEach(product => {
+                    if (productSales[product.id_products]) {
+                        labels.push(product.title);
+                        values.push(productSales[product.id_products]);
+                    }
+                });
+                // Если нет данных — показываем пустой график
+                if (!hasData) {
+                    topProductsChart.data.labels = [];
+                    topProductsChart.data.datasets[0].data = [];
+                } else {
+                    // Сортируем по убыванию
+                    const sortedData = labels.map((label, index) => ({
+                        label: label,
+                        value: values[index]
+                    })).sort((a, b) => b.value - a.value);
+                    const top5 = sortedData.slice(0, 5);
+                    topProductsChart.data.labels = top5.map(item => item.label);
+                    topProductsChart.data.datasets[0].data = top5.map(item => item.value);
+                }
+                topProductsChart.update();
+                // Сводка
+                const totalProducts = values.reduce((a, b) => a + b, 0);
+                document.getElementById('totalProducts').textContent = hasData ? totalProducts : 0;
+                document.getElementById('totalOrders').textContent = hasData ? orders.length : 0;
+            });
+        });
+    }
+
+    // Для функции отображения заказов в админке:
     async function displayOrders() {
         const orders = await fetchOrders();
         const ordersTable = document.getElementById('ordersTable');
@@ -299,5 +393,92 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         return stars;
+    }
+
+    // === Chart.js графики ===
+    const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+    window.monthlySalesChart = new Chart(monthlySalesCtx, {
+        type: 'line',
+        data: {
+            labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+            datasets: [{
+                label: 'Продажи',
+                data: [],
+                borderColor: '#8B4513',
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + ' ₽';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' ₽';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    window.topProductsChart = new Chart(topProductsCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Количество продаж',
+                data: [],
+                backgroundColor: '#8B4513',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+
+    // Обработчики фильтров
+    const yearFilter = document.getElementById('yearFilter');
+    const periodFilter = document.getElementById('periodFilter');
+    if (yearFilter) yearFilter.addEventListener('change', updateMonthlySales);
+    if (periodFilter) periodFilter.addEventListener('change', updateTopProducts);
+
+    // При первой загрузке страницы сразу обновляем графики
+    updateMonthlySales();
+    updateTopProducts();
+
+    // Обновляем графики при активации вкладки 'Статистика'
+    const statsTabBtn = document.querySelector('[data-tab="stats"]');
+    if (statsTabBtn) {
+        statsTabBtn.addEventListener('click', () => {
+            updateMonthlySales();
+            updateTopProducts();
+        });
     }
 });

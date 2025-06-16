@@ -386,8 +386,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
                 // Формируем заказ для API
+                const products = await fetchProducts();
                 const order = {
-                    items: cart,
+                    items: cart.map(item => {
+                        const product = products.find(p => p.id_products === item.id);
+                        return {
+                            id_products: item.id,
+                            quantity: item.quantity,
+                            price: product ? product.price : 0
+                        };
+                    }),
                     total_sum: totalAmount,
                     status_order: 'pending',
                     client_id: id_klient
